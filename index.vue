@@ -7,9 +7,11 @@
     />
 
     <StorageTable 
-      :items="filteredItems"
+      :items="paginatedVisibleItems"
+      :has-more="hasMorePages"
       @edit="openEditModal"
       @delete="deleteKey"
+      @load-more="appendNextPageBlock"
     />
 
     <StorageModal 
@@ -23,48 +25,93 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import StorageHeader from './components/StorageHeader.vue';
 import StorageTable from './components/StorageTable.vue';
 import StorageModal from './components/StorageModal.vue';
 
+// Configuration Bounds
+const PAGE_CHUNK_SIZE = 25; // Number of items loaded per scroll interval
+const MAX_PREVIEW_CHARS = 24; // String truncation length for the list view
+
+// Base Memory States
 const rawStorageItems = ref([]);
 const searchQuery = ref('');
+const visibleLimitCount = ref(PAGE_CHUNK_SIZE);
 const modalActive = ref(false);
 const isEditMode = ref(false);
 const selectedItem = ref({ key: '', value: '' });
 
-function syncStorageData() {
-  const itemsList = [];
-  for (let i = 0; i < window.localStorage.length; i++) {
-    const keyName = window.localStorage.key(i);
-    const valueData = window.localStorage.getItem(keyName);
-    
-    let isJsonFormat = false;
-    try {
-      if (valueData && (valueData.startsWith('{') || valueData.startsWith('['))) {
-        JSON.parse(valueData);
-        isJsonFormat = true;
-      }
-    } catch (e) {}
-
-    itemsList.push({
-      key: keyName,
-      value: valueData || '',
-      isJson: isJsonFormat
-    });
-  }
-  rawStorageItems.value = itemsList.sort((a, b) => a.key.localeCompare(b.key));
+/**
+ * Calculates human-readable string data weights efficiently.
+ */
+function getStorageItemWeight(byteLength) {
+  if (byteLength === 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(byteLength) / Math.log(1024));
+  return `${parseFloat((byteLength / Math.pow(1024, i)).toFixed(1))} ${units[i]}`;
 }
 
-const filteredItems = computed(() => {
-  const q = searchQuery.value.toLowerCase().trim();
-  if (!q) return rawStorageItems.value;
+/**
+ * Syncs the component state with localStorage efficiently.
+ * Extracts tiny text fragments and exact sizes instead of loading whole payloads into memory.
+ */
+function syncStorageData() {
+  const metaList = [];
+  const totalLength = window.localStorage.length;
+
+  for (let i = 0; i < totalLength; i++) {
+    const keyName = window.localStorage.key(i);
+    const rawVal = window.localStorage.getItem(keyName) || '';
+    
+    // Calculate memory allocations instantly
+    const byteWeight = rawVal.length; 
+    const sizeLabel = getStorageItemWeight(byteWeight);
+
+    // Truncate strings immediately to minimize memory overhead
+    const stringSnippet = byteWeight > MAX_PREVIEW_CHARS 
+      ? rawVal.substring(0, MAX_PREVIEW_CHARS) + '...' 
+      : rawVal || '""';
+
+    metaList.push({
+      key: keyName,
+      preview: stringSnippet,
+      sizeText: sizeLabel
+    });
+  }
+
+  // Alphabetical registry sorting matching your file workspace hierarchy
+  rawStorageItems.value = metaList.sort((a, b) => a.key.localeCompare(b.key));
+}
+
+// Reset page counts when active search strings change
+watch(searchQuery, () => {
+  visibleLimitCount.value = PAGE_CHUNK_SIZE;
+});
+
+// Filters data efficiently based on key strings
+const processedFilteredCollection = computed(() => {
+  const queryToken = searchQuery.value.toLowerCase().trim();
+  if (!queryToken) return rawStorageItems.value;
   return rawStorageItems.value.filter(item => 
-    item.key.toLowerCase().includes(q) || 
-    item.value.toLowerCase().includes(q)
+    item.key.toLowerCase().includes(queryToken)
   );
 });
+
+// Returns only the current slice of items for the active view viewport area
+const paginatedVisibleItems = computed(() => {
+  return processedFilteredCollection.value.slice(0, visibleLimitCount.value);
+});
+
+const hasMorePages = computed(() => {
+  return visibleLimitCount.value < processedFilteredCollection.value.length;
+});
+
+function appendNextPageBlock() {
+  if (hasMorePages.value) {
+    visibleLimitCount.value += PAGE_CHUNK_SIZE;
+  }
+}
 
 function openAddModal() {
   isEditMode.value = false;
@@ -72,9 +119,13 @@ function openAddModal() {
   modalActive.value = true;
 }
 
+/**
+ * Fetches the full payload only when explicitly requested for editing.
+ */
 function openEditModal(item) {
   isEditMode.value = true;
-  selectedItem.value = { key: item.key, value: item.value };
+  const fullValue = window.localStorage.getItem(item.key) || '';
+  selectedItem.value = { key: item.key, value: fullValue };
   modalActive.value = true;
 }
 
@@ -102,7 +153,7 @@ onMounted(() => {
 <style scoped>
 .storage-container {
   min-height: 100vh;
-  background-color: #0b0b0c; /* High contrast absolute deep black from your screen capture */
+  background-color: #0b0b0c;
   color: #e3e3e6;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, sans-serif;
   padding: 12px 14px;
