@@ -1,23 +1,40 @@
 <template>
   <header class="storage-header">
-    <div class="title-row">
-      <div class="title-group">
-        <h1>Local Storage</h1>
-        <span class="badge">{{ totalItems }} Items</span>
-      </div>
-      <div class="actions">
-        <button class="btn btn-primary" @click="$emit('add')">＋ Add Key</button>
-        <button class="btn btn-danger" @click="confirmClearAll">⚠️ Clear All</button>
-      </div>
+    <!-- Path Status Line -->
+    <div class="path-display">
+      <svg class="icon-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+      </svg>
+      <span class="path-text">/root/local_storage</span>
     </div>
 
-    <div class="search-bar">
-      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <!-- Arcade Action Grid Buttons row -->
+    <div class="action-grid-buttons">
+      <button class="action-btn" @click="$emit('add')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="12" y1="18" x2="12" y2="12"></line>
+          <line x1="9" y1="15" x2="15" y2="15"></line>
+        </svg>
+        New Key
+      </button>
+      <button class="action-btn" @click="confirmClearAll">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
+        Wipe All
+      </button>
+    </div>
+
+    <!-- Dense Search Entry Field -->
+    <div class="search-wrapper">
       <input 
         type="text" 
         :value="searchQuery" 
         @input="$emit('update:searchQuery', $event.target.value)"
-        placeholder="Filter by key or value text..."
+        placeholder="Filter current registry..."
       />
     </div>
   </header>
@@ -25,33 +42,80 @@
 
 <script setup>
 defineProps({
-  totalItems: { type: Number, required: true },
   searchQuery: { type: String, required: true }
 });
 const emit = defineEmits(['add', 'clearAll', 'update:searchQuery']);
 
 function confirmClearAll() {
-  if (confirm("Are you absolutely sure you want to purge ALL local storage data? This can break your apps.")) {
+  if (confirm("Purge ALL storage key rows?")) {
     emit('clearAll');
   }
 }
 </script>
 
 <style scoped>
-.storage-header { margin-bottom: 16px; }
-.title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.title-group { display: flex; align-items: center; gap: 12px; }
-h1 { font-size: 22px; font-weight: 600; margin: 0; color: #ffffff; }
-.badge { font-size: 12px; padding: 4px 8px; border-radius: 12px; background-color: #18181b; border: 1px solid #27272a; color: #a1a1aa; }
-.actions { display: flex; gap: 8px; }
-.btn { border: none; padding: 8px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; }
-.btn-primary { background-color: #22c55e; color: #000000; font-weight: 600; }
-.btn-primary:active { background-color: #16a34a; }
-.btn-danger { background-color: #27272a; border: 1px solid #dc2626; color: #ef4444; }
-.btn-danger:active { background-color: #450a0a; }
-.search-bar { position: relative; display: flex; align-items: center; }
-.search-icon { position: absolute; left: 12px; width: 16px; height: 16px; color: #52525b; pointer-events: none; }
-input { width: 100%; background-color: #18181b; border: 1px solid #27272a; border-radius: 8px; padding: 10px 12px 10px 38px; color: #ffffff; font-size: 14px; outline: none; }
-input:focus { border-color: #3f3f46; }
+.storage-header {
+  margin-bottom: 12px;
+}
+.path-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  margin-bottom: 16px;
+}
+.icon-folder {
+  width: 16px;
+  height: 16px;
+  color: #7c7c82;
+}
+.path-text {
+  font-family: monospace;
+  font-size: 14px;
+  color: #7c7c82;
+}
+.action-grid-buttons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.action-btn {
+  flex: 1;
+  background-color: #212124;
+  border: 1px solid #2d2d31;
+  border-radius: 4px;
+  color: #e3e3e6;
+  font-size: 13px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.action-btn svg {
+  width: 14px;
+  height: 14px;
+  color: #a1a1aa;
+}
+.action-btn:active {
+  background-color: #2a2a2e;
+}
+.search-wrapper {
+  padding: 0 2px;
+}
+input {
+  width: 100%;
+  background-color: #141416;
+  border: 1px solid #242427;
+  border-radius: 4px;
+  padding: 8px 10px;
+  color: #ffffff;
+  font-size: 13px;
+  box-sizing: border-box;
+  outline: none;
+}
+input:focus {
+  border-color: #38383c;
+}
 </style>
 

@@ -1,7 +1,6 @@
 <template>
   <div class="storage-container">
     <StorageHeader 
-      :total-items="filteredItems.length"
       v-model:search-query="searchQuery"
       @add="openAddModal"
       @clear-all="clearAllStorage"
@@ -29,30 +28,25 @@ import StorageHeader from './components/StorageHeader.vue';
 import StorageTable from './components/StorageTable.vue';
 import StorageModal from './components/StorageModal.vue';
 
-// Local States
 const rawStorageItems = ref([]);
 const searchQuery = ref('');
 const modalActive = ref(false);
 const isEditMode = ref(false);
 const selectedItem = ref({ key: '', value: '' });
 
-// Reads local storage entries cleanly
 function syncStorageData() {
   const itemsList = [];
   for (let i = 0; i < window.localStorage.length; i++) {
     const keyName = window.localStorage.key(i);
     const valueData = window.localStorage.getItem(keyName);
     
-    // Check if the payload is structural JSON text
     let isJsonFormat = false;
     try {
       if (valueData && (valueData.startsWith('{') || valueData.startsWith('['))) {
         JSON.parse(valueData);
         isJsonFormat = true;
       }
-    } catch (e) {
-      // Disregard non-JSON formats safely
-    }
+    } catch (e) {}
 
     itemsList.push({
       key: keyName,
@@ -60,8 +54,6 @@ function syncStorageData() {
       isJson: isJsonFormat
     });
   }
-  
-  // Sort alphabetically by key identifier
   rawStorageItems.value = itemsList.sort((a, b) => a.key.localeCompare(b.key));
 }
 
@@ -87,13 +79,9 @@ function openEditModal(item) {
 }
 
 function commitStorageData(payload) {
-  try {
-    window.localStorage.setItem(payload.key, payload.value);
-    modalActive.value = false;
-    syncStorageData();
-  } catch (error) {
-    alert(`Failed to save data matrix parameters: ${error.message}`);
-  }
+  window.localStorage.setItem(payload.key, payload.value);
+  modalActive.value = false;
+  syncStorageData();
 }
 
 function deleteKey(keyName) {
@@ -114,10 +102,10 @@ onMounted(() => {
 <style scoped>
 .storage-container {
   min-height: 100vh;
-  background-color: #0b0b0c;
+  background-color: #0b0b0c; /* High contrast absolute deep black from your screen capture */
   color: #e3e3e6;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  padding: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, sans-serif;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
