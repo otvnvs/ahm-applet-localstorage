@@ -14,13 +14,12 @@
           <div class="meta-square"></div>
           <div class="text-group">
             <span class="item-key">{{ item.key }}</span>
-            <span class="item-size-label">{{ item.sizeText }}</span>
           </div>
         </div>
 
         <!-- Right Section: Fast flat preview string fragment and interactive thin actions -->
         <div class="right-section">
-          <span class="value-preview">{{ item.preview }}</span>
+            <span class="item-size-label">{{ item.sizeText }}</span>
           <button class="delete-btn" @click.stop="confirmDelete(item.key)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="3 6 5 6 21 6"></polyline>

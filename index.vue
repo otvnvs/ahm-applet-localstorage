@@ -69,13 +69,9 @@ function syncStorageData() {
     const sizeLabel = getStorageItemWeight(byteWeight);
 
     // Truncate strings immediately to minimize memory overhead
-    const stringSnippet = byteWeight > MAX_PREVIEW_CHARS 
-      ? rawVal.substring(0, MAX_PREVIEW_CHARS) + '...' 
-      : rawVal || '""';
 
     metaList.push({
       key: keyName,
-      preview: stringSnippet,
       sizeText: sizeLabel
     });
   }
